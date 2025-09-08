@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>管理後台 - Blackjack21</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .admin { max-width: 1000px; margin: 16px auto; background: var(--panel); padding:16px; border-radius:10px; border:1px solid #1d2745; }
+      .row { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+      table { width:100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #2a3963; padding: 6px 8px; text-align: left; }
+      .login { display:flex; gap:8px; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <h1>管理後台</h1>
+      <nav>
+        <a href="/">返回首頁</a>
+      </nav>
+    </header>
+
+    <section class="admin">
+      <div id="authPanel" class="row">
+        <div class="login">
+          <input id="adminUser" placeholder="使用者" value="admin" />
+          <input id="adminPass" placeholder="密碼" type="password" />
+          <button id="loginBtn">登入</button>
+        </div>
+      </div>
+
+      <div id="adminPanel" class="hidden">
+        <div class="row">
+          <button id="logoutBtn" class="secondary">登出</button>
+          <input id="searchInput" placeholder="搜尋玩家名稱 (需完全相符)" />
+          <button id="searchBtn">搜尋</button>
+          <span style="flex:1"></span>
+          <label>每頁筆數：</label>
+          <div class="select"><select id="pageSize">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+          </select></div>
+        </div>
+
+        <h3>玩家列表</h3>
+        <table>
+          <thead><tr><th>Username</th><th>Max Chips</th><th>Created</th></tr></thead>
+          <tbody id="playersBody"></tbody>
+        </table>
+
+        <h3 style="margin-top:18px;">最近回合 <small id="roundsTitle"></small></h3>
+        <table>
+          <thead><tr><th>Player</th><th>Round</th><th>Bet</th><th>Result</th><th>±</th><th>Chips</th><th>Time</th></tr></thead>
+          <tbody id="roundsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <script src="/admin.js"></script>
+  </body>
+  </html>

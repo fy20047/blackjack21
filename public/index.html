@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blackjack 21</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Blackjack 21</h1>
+      <nav>
+        <a href="/admin">管理後台</a>
+      </nav>
+    </header>
+
+    <section class="leaderboard">
+      <div class="leaderboard-header">
+        <h2>前五名玩家</h2>
+        <div class="select">
+          <select id="periodSelect">
+          <option value="all">總排行</option>
+          <option value="day">今日</option>
+          <option value="week">本週</option>
+          <option value="month">本月</option>
+          </select>
+        </div>
+      </div>
+      <ol id="top5"></ol>
+    </section>
+
+    <main class="game">
+      <div id="loginPanel" class="panel">
+        <h3>輸入玩家暱稱</h3>
+        <input id="usernameInput" placeholder="暱稱" maxlength="20" />
+        <button id="startBtn">開始</button>
+      </div>
+
+      <div id="gamePanel" class="panel hidden">
+        <div class="player-info">
+          <span>玩家：<strong id="playerName"></strong></span>
+          <span>籌碼：<strong id="chips"></strong></span>
+          <button id="logoutPlayerBtn" class="secondary">登出</button>
+          <button id="resetBtn" class="secondary hidden">重新開始(100)</button>
+        </div>
+
+        <div class="round-indicator">目前回合：<strong id="roundNo">1</strong></div>
+
+        <div class="betting" id="bettingPanel">
+          <label>下注金額：</label>
+          <input id="betInput" type="number" min="1" step="1" />
+          <button id="dealBtn">發牌</button>
+        </div>
+
+        <div class="table">
+          <div class="hand">
+            <h4>莊家</h4>
+            <div id="dealerHand" class="cards"></div>
+            <div id="dealerScore" class="score">0</div>
+          </div>
+          <div class="hand">
+            <h4>玩家</h4>
+            <div id="playerHand" class="cards"></div>
+            <div id="playerScore" class="score">0</div>
+          </div>
+        </div>
+
+        <div id="actions" class="actions hidden">
+          <button id="hitBtn">要牌</button>
+          <button id="standBtn">停牌</button>
+        </div>
+
+        <div id="banner" class="banner hidden"></div>
+
+        <div class="recent">
+          <h4>近五戰績</h4>
+          <table>
+            <thead>
+              <tr><th>Round</th><th>Result</th><th>Bet</th><th>±</th><th>Chips</th></tr>
+            </thead>
+            <tbody id="recentBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span>訪客累計：<strong id="visitorCount">-</strong></span>
+      <span class="spacer"></span>
+      <span>© Blackjack21</span>
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>

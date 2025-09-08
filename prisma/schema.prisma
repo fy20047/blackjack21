@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model VisitorStat {
+  id        Int      @id @default(1)
+  total     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  sessions     AdminSession[]
+}
+
+model AdminSession {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  admin     AdminUser @relation(fields: [adminId], references: [id])
+  adminId   Int
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+}
+
+model Player {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  maxChips  Int      @default(100)
+  createdAt DateTime @default(now())
+  rounds    Round[]
+}
+
+model Round {
+  id          Int         @id @default(autoincrement())
+  roundNo     Int
+  bet         Int
+  result      String
+  delta       Int
+  chipsAfter  Int
+  createdAt   DateTime    @default(now())
+
+  player      Player      @relation(fields: [playerId], references: [id])
+  playerId    Int
+
+  @@index([playerId, createdAt])
+}

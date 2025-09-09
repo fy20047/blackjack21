@@ -6,6 +6,7 @@
     <title>管理後台 - Blackjack21</title>
     <link rel="stylesheet" href="/styles.css" />
     <style>
+      /* 後台頁面局部樣式 */
       .admin { max-width: 1000px; margin: 16px auto; background: var(--panel); padding:16px; border-radius:10px; border:1px solid #1d2745; }
       .row { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
       table { width:100%; border-collapse: collapse; }
@@ -14,6 +15,7 @@
     </style>
   </head>
   <body>
+    <!-- 後台頁首：標題與返回首頁連結 -->
     <header class="header">
       <h1>管理後台</h1>
       <nav>
@@ -21,6 +23,7 @@
       </nav>
     </header>
 
+    <!-- 後台主體：登入面板 + 管理畫面 -->
     <section class="admin">
       <div id="authPanel" class="row">
         <div class="login">
@@ -52,6 +55,11 @@
         </table>
 
         <h3 style="margin-top:18px;">最近回合 <small id="roundsTitle"></small></h3>
+        <div class="row" id="paginationBar" style="justify-content:flex-end; gap:8px;">
+          <button id="prevPage" class="secondary">上一頁</button>
+          <span id="pageInfo" style="min-width:140px; text-align:center; color: var(--muted);"></span>
+          <button id="nextPage" class="secondary">下一頁</button>
+        </div>
         <table>
           <thead><tr><th>Player</th><th>Round</th><th>Bet</th><th>Result</th><th>±</th><th>Chips</th><th>Time</th></tr></thead>
           <tbody id="roundsBody"></tbody>

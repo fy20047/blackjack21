@@ -1,23 +1,27 @@
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const dotenv = require('dotenv');
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
-const path = require('path');
+// 伺服器端主程式：設定 Express、API 路由與資料庫操作
+const express = require('express'); // 建立 web 伺服器與路由
+const cors = require('cors'); // 設定跨域
+const cookieParser = require('cookie-parser'); // 讀 Cookie → req.cookies
+const dotenv = require('dotenv'); // 讀 .env
+const crypto = require('crypto'); // 產 token（未用到）
+const bcrypt = require('bcryptjs'); // 密碼雜湊
+const path = require('path'); // 檔案路徑
 
-dotenv.config();
+dotenv.config(); // 把 .env 內容載入 process.env
 
+// Prisma 用於連線 SQLite 並操作資料表
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const app = express();
 
+// 環境設定
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'admin_session';
 const SESSION_TTL_HOURS = Number(process.env.SESSION_TTL_HOURS || 24);
 const ALLOW_ORIGIN = process.env.ALLOW_ORIGIN || '*';
 
+// 跨域設定（預設允許任意來源），並允許 Cookie
 app.use(cors({
   origin: (origin, cb) => cb(null, ALLOW_ORIGIN === '*' ? true : origin === ALLOW_ORIGIN),
   credentials: true
@@ -25,18 +29,19 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Serve static files (frontend)
+// 提供前端靜態資源
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// 啟動時初始化必要資料（訪客統計、預設管理員）
 async function ensureBootData() {
-  // VisitorStat singleton id = 1
+  // 訪客統計單例 id = 1，不存在就建立
   await prisma.visitorStat.upsert({
     where: { id: 1 },
     update: {},
     create: { id: 1, total: 0 }
   });
 
-  // Admin default user: admin/admin1234 if no admin exists
+  // 若無管理員則建立預設帳號：admin/admin1234
   const count = await prisma.adminUser.count();
   if (count === 0) {
     const username = 'admin';
@@ -51,6 +56,7 @@ function addHours(date, hours) {
   return new Date(date.getTime() + hours * 60 * 60 * 1000);
 }
 
+// 中介層：驗證管理員 Session，保護後台資料 API
 async function requireAdmin(req, res, next) {
   try {
     const token = req.cookies[SESSION_COOKIE_NAME];
@@ -70,7 +76,7 @@ async function requireAdmin(req, res, next) {
   }
 }
 
-// Visitor stats
+// 訪客統計：查詢
 app.get('/api/visitor', async (req, res) => {
   try {
     const stat = await prisma.visitorStat.findUnique({ where: { id: 1 } });
@@ -81,6 +87,7 @@ app.get('/api/visitor', async (req, res) => {
   }
 });
 
+// 訪客統計：累加 +1
 app.post('/api/visitor/hit', async (req, res) => {
   try {
     const stat = await prisma.visitorStat.update({
@@ -94,7 +101,7 @@ app.post('/api/visitor/hit', async (req, res) => {
   }
 });
 
-// Admin auth
+// 管理員登入：驗證帳密後發放 Session Cookie
 app.post('/api/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -119,6 +126,7 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
+// 管理員登出：清除 Session Cookie 與資料
 app.post('/api/admin/logout', requireAdmin, async (req, res) => {
   try {
     const token = req.cookies[SESSION_COOKIE_NAME];
@@ -131,7 +139,7 @@ app.post('/api/admin/logout', requireAdmin, async (req, res) => {
   }
 });
 
-// Admin data views
+// 後台：玩家列表（支援搜尋 username 模糊查詢）
 app.get('/api/admin/players', requireAdmin, async (req, res) => {
   try {
     const search = (req.query.search || '').toString().trim();
@@ -144,30 +152,34 @@ app.get('/api/admin/players', requireAdmin, async (req, res) => {
   }
 });
 
+// 後台：最近回合（只有當 username 完全相符時才回傳）
 app.get('/api/admin/rounds', requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit || 100), 500);
+    const page = Math.max(Number(req.query.page || 1), 1);
     const username = (req.query.username || '').toString().trim();
     if (!username) {
       // 未搜尋時不回傳回合，依需求只顯示玩家列表
-      return res.json([]);
+      return res.json({ rounds: [], total: 0, page, limit });
     }
     const player = await prisma.player.findUnique({ where: { username } });
-    if (!player) return res.json([]);
+    if (!player) return res.json({ rounds: [], total: 0, page, limit });
+    const total = await prisma.round.count({ where: { playerId: player.id } });
     const rounds = await prisma.round.findMany({
       where: { playerId: player.id },
       orderBy: { createdAt: 'desc' },
       take: limit,
+      skip: (page - 1) * limit,
       include: { player: true }
     });
-    res.json(rounds);
+    res.json({ rounds, total, page, limit });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Failed to fetch rounds' });
   }
 });
 
-// Rounds API
+// 前台：取得玩家最近回合（首頁近五戰績）
 app.get('/api/rounds', async (req, res) => {
   try {
     const username = (req.query.username || '').toString().trim();
@@ -187,6 +199,7 @@ app.get('/api/rounds', async (req, res) => {
   }
 });
 
+// 前台：寫入一筆回合紀錄並（必要時）更新玩家歷史最高籌碼
 app.post('/api/rounds', async (req, res) => {
   try {
     const { username, roundNo, bet, result, delta, chipsAfter } = req.body || {};
@@ -228,7 +241,9 @@ app.post('/api/rounds', async (req, res) => {
   }
 });
 
-// Leaderboard API
+// 排行榜 API：
+// - all：回傳 Player.maxChips 排名前 10
+// - day/week/month：以該期間 Round.chipsAfter 的最大值分組排序
 app.get('/api/leaderboard', async (req, res) => {
   try {
     const period = (req.query.period || 'all').toString();
@@ -245,8 +260,7 @@ app.get('/api/leaderboard', async (req, res) => {
       return;
     }
 
-    // Period-based: compute max chipsAfter per player within timeframe
-    // Use groupBy Round
+    // 區間排行：針對該期間內各玩家找出 chipsAfter 最大值排序
     const grouped = await prisma.round.groupBy({
       by: ['playerId'],
       where: { createdAt: { gte: since } },
@@ -270,12 +284,11 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-// Fallback to index.html for root
+// 首頁與後台頁面
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-// Admin page
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
 });

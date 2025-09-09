@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <!-- 頁首：標題與導覽連結 -->
     <header class="header">
       <h1>Blackjack 21</h1>
       <nav>
@@ -14,12 +15,13 @@
       </nav>
     </header>
 
+    <!-- 排行榜（前五名）與期間選擇 -->
     <section class="leaderboard">
       <div class="leaderboard-header">
         <h2>前五名玩家</h2>
         <div class="select">
           <select id="periodSelect">
-          <option value="all">總排行</option>
+            <option value="all">總排行</option>
           <option value="day">今日</option>
           <option value="week">本週</option>
           <option value="month">本月</option>
@@ -29,6 +31,7 @@
       <ol id="top5"></ol>
     </section>
 
+    <!-- 遊戲主區域：登入（暱稱）→ 遊戲面板 -->
     <main class="game">
       <div id="loginPanel" class="panel">
         <h3>輸入玩家暱稱</h3>
@@ -37,6 +40,7 @@
       </div>
 
       <div id="gamePanel" class="panel hidden">
+        <!-- 玩家資訊列（名稱 / 籌碼 / 登出 / 重新開始） -->
         <div class="player-info">
           <span>玩家：<strong id="playerName"></strong></span>
           <span>籌碼：<strong id="chips"></strong></span>
@@ -49,9 +53,11 @@
         <div class="betting" id="bettingPanel">
           <label>下注金額：</label>
           <input id="betInput" type="number" min="1" step="1" />
+          <button id="allInBtn" class="secondary" title="押上所有籌碼">ALL IN</button>
           <button id="dealBtn">發牌</button>
         </div>
 
+        <!-- 桌面：莊家/玩家 手牌與分數 -->
         <div class="table">
           <div class="hand">
             <h4>莊家</h4>
@@ -65,6 +71,7 @@
           </div>
         </div>
 
+        <!-- 動作：要牌 / 停牌 -->
         <div id="actions" class="actions hidden">
           <button id="hitBtn">要牌</button>
           <button id="standBtn">停牌</button>
@@ -84,6 +91,7 @@
       </div>
     </main>
 
+    <!-- 頁尾：訪客統計 -->
     <footer class="footer">
       <span>訪客累計：<strong id="visitorCount">-</strong></span>
       <span class="spacer"></span>

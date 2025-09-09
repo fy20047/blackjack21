@@ -1,22 +1,29 @@
-// Simple client-side Blackjack + API integration
+// 前端 Blackjack 遊戲主程式：處理牌局、UI 更新與 API 串接
 
 const el = (id) => document.getElementById(id);
 
 const state = {
+  // 使用者暱稱
   username: null,
+  // 目前籌碼（本地狀態）
   chips: 100,
+  // 當前回合編號（用於畫面顯示與寫入後端）
   roundNo: 1,
+  // 牌堆與手牌
   deck: [],
   playerHand: [],
   dealerHand: [],
+  // 當前下注與是否進行中
   bet: 0,
   inRound: false,
 };
 
+// 儲存本地狀態（只保存必要欄位）
 function saveLocal() {
   localStorage.setItem('bj_state', JSON.stringify({ username: state.username, chips: state.chips, roundNo: state.roundNo }));
 }
 
+// 載入本地狀態
 function loadLocal() {
   try {
     const raw = localStorage.getItem('bj_state');
@@ -28,6 +35,7 @@ function loadLocal() {
   } catch {}
 }
 
+// 依據 state 更新介面
 function updateUI() {
   el('chips').textContent = state.chips;
   el('playerName').textContent = state.username || '';
@@ -36,13 +44,15 @@ function updateUI() {
   el('betInput').value = Math.min(Math.max(1, Math.floor(state.chips / 5) || 1), state.chips || 1);
 }
 
-function cardValue(card) { // card like 'A♠', '10♦', 'K♥'
+// 取得單張牌點數（JQK=10，A 預設 11）
+function cardValue(card) { // 卡物件例如 {rank:'A', suit:'♠'}
   const rank = card.rank;
   if (['J','Q','K'].includes(rank)) return 10;
   if (rank === 'A') return 11; // treat as 11 initially
   return Number(rank);
 }
 
+// 計算一手牌的分數（A 可當 1 以避免爆牌）
 function handScore(cards) {
   let total = 0; let aces = 0;
   for (const c of cards) { total += cardValue(c); if (c.rank === 'A') aces++; }
@@ -50,6 +60,7 @@ function handScore(cards) {
   return total;
 }
 
+// 生成並洗牌（單副牌）
 function makeDeck() {
   const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
   const suits = ['♠','♥','♦','♣'];
@@ -63,6 +74,7 @@ function makeDeck() {
   return deck;
 }
 
+// 繪製手牌（莊家第二張預設蓋住）
 function renderHands(hideDealerHole = true) {
   const ph = el('playerHand');
   const dh = el('dealerHand');
@@ -84,6 +96,7 @@ function renderHands(hideDealerHole = true) {
   el('dealerScore').textContent = hideDealerHole ? (cardValue(state.dealerHand[0])) : handScore(state.dealerHand);
 }
 
+// 顯示結算橫幅
 function showBanner(type, bet, delta, chipsAfter) {
   const b = el('banner');
   b.className = 'banner ' + type;
@@ -94,12 +107,14 @@ function showBanner(type, bet, delta, chipsAfter) {
 
 function hideBanner() { el('banner').className = 'banner hidden'; el('banner').textContent = ''; }
 
+// fetch 包裝（自動帶上 JSON 與 Cookie）
 async function fetchJSON(url, options) {
   const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...options });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
+// 重新載入近五戰績（向後端取資料）
 async function refreshRecent() {
   if (!state.username) return;
   try {
@@ -114,6 +129,7 @@ async function refreshRecent() {
   } catch (e) { console.warn('recent err', e); }
 }
 
+// 重新載入排行榜（支援期間切換）
 async function refreshLeaderboard() {
   try {
     const period = el('periodSelect').value;
@@ -130,6 +146,7 @@ async function refreshLeaderboard() {
   } catch (e) { console.warn('lb err', e); }
 }
 
+// 訪客累計 +1 或讀取目前值
 async function bumpVisitor() {
   try {
     const res = await fetchJSON('/api/visitor/hit', { method: 'POST' });
@@ -142,6 +159,7 @@ async function bumpVisitor() {
   }
 }
 
+// 初始牌發兩張給玩家與莊家
 function dealInitial() {
   state.deck = makeDeck();
   state.playerHand = [ state.deck.pop(), state.deck.pop() ];
@@ -150,6 +168,7 @@ function dealInitial() {
   state.inRound = true;
 }
 
+// 結算邏輯：依結果調整籌碼、送後端寫入 Round
 async function settle(result) {
   const bet = state.bet;
   let delta = 0;
@@ -184,6 +203,7 @@ async function settle(result) {
   updateUI();
 }
 
+// 綁定所有按鈕事件
 function attachEvents() {
   el('startBtn').addEventListener('click', async () => {
     const name = el('usernameInput').value.trim();
@@ -235,6 +255,13 @@ function attachEvents() {
     el('actions').classList.remove('hidden');
   });
 
+  // ALL IN：一鍵把下注金額設為現有籌碼
+  el('allInBtn').addEventListener('click', () => {
+    if (!state.username) return alert('請先輸入暱稱');
+    if (state.chips <= 0) return alert('沒有可用籌碼');
+    el('betInput').value = state.chips;
+  });
+
   el('hitBtn').addEventListener('click', async () => {
     if (!state.inRound) return;
     state.playerHand.push(state.deck.pop());
@@ -264,6 +291,7 @@ function attachEvents() {
   el('periodSelect').addEventListener('change', refreshLeaderboard);
 }
 
+// 啟動：載入本地狀態、繫結事件、初次載入排行榜與訪客數
 async function boot() {
   loadLocal();
   attachEvents();

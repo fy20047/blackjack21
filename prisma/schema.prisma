@@ -1,18 +1,22 @@
+/// 產生 Prisma Client（JavaScript 版）
 generator client {
   provider = "prisma-client-js"
 }
 
+/// 資料來源：SQLite，路徑由環境變數 DATABASE_URL 提供
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
+/// 訪客統計（單筆記錄，固定 id = 1）
 model VisitorStat {
   id        Int      @id @default(1)
   total     Int      @default(0)
   updatedAt DateTime @updatedAt
 }
 
+/// 管理員帳號
 model AdminUser {
   id           Int       @id @default(autoincrement())
   username     String    @unique
@@ -21,6 +25,7 @@ model AdminUser {
   sessions     AdminSession[]
 }
 
+/// 管理員 Session（以 token 維持登入）
 model AdminSession {
   id        Int       @id @default(autoincrement())
   token     String    @unique
@@ -30,6 +35,7 @@ model AdminSession {
   expiresAt DateTime?
 }
 
+/// 玩家（username 唯一）、maxChips 保存歷史最高籌碼
 model Player {
   id        Int      @id @default(autoincrement())
   username  String   @unique
@@ -38,6 +44,7 @@ model Player {
   rounds    Round[]
 }
 
+/// 回合紀錄：包含下注、結果（WIN/LOSE/PUSH）、結算後籌碼
 model Round {
   id          Int         @id @default(autoincrement())
   roundNo     Int

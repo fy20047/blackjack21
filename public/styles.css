@@ -1,3 +1,4 @@
+/* 全站主題色與變數 */
 :root {
   --bg: #0c1222;
   --panel: #151d34;
@@ -10,17 +11,20 @@
 }
 
 * { box-sizing: border-box; }
+/* 版面基礎排版 */
 body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background: var(--bg); color: var(--text); }
 .header, .footer { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; background: #0c142a; border-bottom: 1px solid #1d2745; }
+/* 導覽連結（右上角） */
 .header a { color: #ffffff; text-decoration: none; font-weight: 600; }
 .header a:hover { text-decoration: underline; }
 .footer { border-top:1px solid #1d2745; border-bottom:0; position: sticky; bottom:0; gap:12px; }
 .spacer { flex: 1; }
+/* 區塊外觀：排行榜與遊戲面板 */
 .leaderboard, .game .panel { max-width: 960px; margin: 16px auto; background: var(--panel); padding: 16px; border-radius: 10px; border: 1px solid #1d2745; }
 .leaderboard-header { display:flex; align-items:center; gap: 12px; }
 ol#top5 { margin-left: 18px; }
 
-/* nicer select */
+/* 美化期間選單（下拉） */
 .select { position: relative; display:inline-block; }
 .select select { -webkit-appearance:none; -moz-appearance:none; appearance:none; padding: 8px 36px 8px 12px; border-radius: 8px; border: 1px solid #3a4a79; background: #0f1630; color: var(--text); font-weight:600; }
 .select::after { content: "▾"; position:absolute; right:10px; top:50%; transform: translateY(-50%); color:#9ab0ff; pointer-events:none; }
@@ -31,6 +35,7 @@ ol#top5 { margin-left: 18px; }
 button { background: var(--accent); border: 0; padding: 8px 12px; border-radius: 8px; color: #071225; font-weight: 600; cursor: pointer; }
 input { padding: 8px; border-radius: 8px; border: 1px solid #3a4a79; background: #0f1630; color: var(--text); }
 
+/* 牌桌佈局：莊家/玩家 */
 .table { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
 .hand { background: #0f1630; border: 1px solid #2a3963; border-radius: 8px; padding: 10px; }
 .cards { display: flex; gap: 8px; min-height: 70px; align-items:center; }
@@ -39,6 +44,7 @@ input { padding: 8px; border-radius: 8px; border: 1px solid #3a4a79; background:
 .score { font-size: 14px; color: var(--muted); }
 
 .actions { display:flex; gap: 10px; }
+/* 結算橫幅（勝/敗/平） */
 .banner { margin-top: 12px; padding: 10px; border-radius: 8px; font-weight: 700; }
 .banner.win { background: #16351c; border: 1px solid var(--win); color: #b9f7be; }
 .banner.lose { background: #3a1210; border: 1px solid var(--lose); color: #ffd4d1; }
@@ -47,4 +53,5 @@ input { padding: 8px; border-radius: 8px; border: 1px solid #3a4a79; background:
 .recent table { width: 100%; border-collapse: collapse; }
 .recent th, .recent td { border-bottom: 1px solid #2a3963; padding: 6px 8px; text-align: left; }
 
+/* 回合指示 */
 .round-indicator { margin-top: 8px; font-size: 14px; color: var(--muted); }

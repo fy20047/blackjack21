@@ -1,0 +1,64 @@
+# public/app.js 行內導讀（逐行說明）
+
+說明方式：以「L行號：說明」對應原始碼的每一行用途與語法。行號以目前版本為主，未來若有變動請以內容對照。
+
+- L1：檔頭中文註解，說明此檔為前端遊戲主程式。
+- L3：宣告工具函式 `el`，用 `document.getElementById(id)` 取得元素，方便簡寫。
+- L5：宣告 `state`（物件）作為前端的應用狀態容器。
+- L6：`username` 使用者暱稱（字串或 null）。
+- L8：`chips` 目前籌碼，初始 100（數字）。
+- L10：`roundNo` 當前回合顯示用（數字）。
+- L12：`deck` 牌堆陣列（稍後以物件 {rank,suit} 填入）。
+- L11–L14：`playerHand`、`dealerHand` 為雙方手牌陣列；`bet` 當前下注；`inRound` 是否進行中。
+- L18：`saveLocal()` 把必要狀態（username/chips/roundNo）序列化成 JSON 放進 `localStorage`。
+- L22：`loadLocal()` 嘗試把 `localStorage` 的資料轉回物件，寫回 `state`。
+- L33：`updateUI()` 依 `state` 更新畫面數值與輸入預設值。
+- L35–L39：更新玩家名稱、籌碼、回合數字；控制「重新開始」按鈕顯示；建議下注預設值。
+- L42：`cardValue(card)` 把單張牌轉數值；JQK=10、A 當 11，其餘轉數字。
+- L50：`handScore(cards)` 計算一手的點數；若超過 21 且有 A，將 A 由 11 改 1（每次 -10）直到不爆。
+- L58：`makeDeck()` 生成一副牌（4 花色 × 13 階），並以洗牌演算法（Fisher-Yates）打亂。
+- L61：`suits` 陣列定義為四種花色（♠/♥/♦/♣）。
+- L64–L67：隨機交換陣列元素完成洗牌。
+- L71：`renderHands(hideDealerHole = true)` 把手牌渲染到畫面；`hideDealerHole` 控制莊家第二張是否背面。
+- L74–L81：玩家每張牌建立一個 `.card` 元素顯示 `rank + suit`。
+- L82–L87：莊家牌列，同理，但第二張在 `hideDealerHole` 為真時以 `.back` 顯示背面。
+- L88–L89：顯示雙方分數；莊家在未攤牌時只顯示第一張的點數。
+- L93：`showBanner(type, bet, delta, chipsAfter)` 顯示結算橫幅；`type` 為 'win'/'lose'/'push'。
+- L96：以三元運算子決定顯示「勝/敗/平」文字。
+- L97–L98：組裝提示文字並移除 hidden 類別顯示橫幅。
+- L101：`hideBanner()` 隱藏橫幅並清空文字。
+- L103：`fetchJSON(url, options)` 包裝 `fetch`：自動帶 `Content-Type: application/json` 與 `credentials: 'include'`（攜帶 Cookie）。
+- L105–L106：錯誤時丟擲錯誤字串，成功則回傳 `res.json()` 解析後物件。
+- L110：`refreshRecent()` 重新載入近五戰績（向 /api/rounds 取資料）。
+- L113–L120：把回傳的回合資料轉成表格列並插入 `#recentBody`。
+- L129：`refreshLeaderboard()` 依下拉選擇的期間撈排行榜（/api/leaderboard）。
+- L133–L136：依期間不同顯示 all（maxChips）或 period（periodMaxChips）。
+- L140：`bumpVisitor()` 增加訪客數（POST /api/visitor/hit）；失敗時改用 GET 讀目前值。
+- L153：`dealInitial()` 發初始牌：玩家/莊家各兩張，牌堆由 `makeDeck()` 產生。
+- L157–L159：渲染手牌並設定 `inRound=true`（進行中）。
+- L162：`settle(result)` 結算流程；`result` 為 'WIN'/'LOSE'/'PUSH'。
+- L165–L168：計算 `delta`（贏 +bet、輸 -bet、平 0）；更新 `chips` 下限為 0。
+- L169–L173：保存本地、更新 UI、顯示橫幅並將回合結束 `inRound=false`。
+- L174–L175：更新近五戰績與排行榜。
+- L179–L189：將本局資料 `POST /api/rounds` 送到後端紀錄（帶 username/roundNo/bet/result/delta/chipsAfter）。
+- L191–L194：遞增 `roundNo`、保存本地並更新 UI。
+- L196：`attachEvents()` 綁定所有按鈕與互動事件。
+- L197–L206：「開始」按鈕：讀取暱稱、切換面板、更新 UI、拉近五戰績。
+- L208–L212：「重新開始」：chips=100、roundNo=1、清空「近五戰績」表格、隱藏橫幅。
+- L214–L232：「登出」：清空所有本地狀態與畫面，回到暱稱輸入面板。
+- L234–L244：「發牌」：檢查下注有效且不超過籌碼；發初始牌，顯示要牌/停牌按鈕。
+- L246–L250：「ALL IN」：將下注輸入框設為目前籌碼。
+- L253–L263：「要牌」：玩家多抽一張，若分數 > 21 立即結算為輸。
+- L265–L277：「停牌」：莊家補到 17 點以上後比較大小，決定勝/敗/平並結算。
+- L279：下拉切換期間時，重新載入排行榜。
+- L283：`boot()` 啟動函式：載入本地狀態、綁事件、更新 UI。
+- L287–L291：若已有暱稱，直接顯示遊戲面板並拉近五戰績。
+- L292–L293：並行更新訪客統計與排行榜。
+- L296：呼叫 `boot()` 進入應用流程。
+
+---
+小辭典：
+- 事件監聽（addEventListener）：把函式掛在元素上，當事件（點擊等）發生就執行。
+- 解構與模板字串：本檔案中以模板字串 `` `${x} 文本` `` 組裝輸出。
+- 立即回傳與早退：多數事件處理以 `return` 提前結束避免繼續執行無效動作。
+- DOM 操作：以 `innerHTML`/`textContent`/`classList` 改變畫面。

@@ -1,0 +1,107 @@
+# server/index.js 行內導讀（逐行說明）
+
+說明方式：以「L行號：說明」對應原始碼的每一行用途與語法。行號以目前版本為主，未來若有變動請以內容對照。
+
+- L1：檔頭中文註解，說明檔案角色（伺服器端主程式）。
+- L2：引入 `express`（Node.js 的 Web 伺服器框架）。CommonJS 語法 `require('express')` 取得模組。
+- L3：引入 `cors`（跨來源資源共用，允許前端跨網域呼叫 API）。
+- L4：引入 `cookie-parser`（解析 HTTP Cookie 方便讀寫）。
+- L5：引入 `dotenv`（將 `.env` 內容載入到 `process.env`）。
+- L6：引入 `crypto`（Node 內建加密工具，用來產生隨機 session token）。
+- L7：引入 `bcryptjs`（處理密碼雜湊與比對）。
+- L8：引入 `path`（Node 內建路徑工具，組合跨平台路徑）。
+- L10：`dotenv.config()` 讀取 `.env` 檔案，把變數加入 `process.env`。
+- L12：解構取得 `PrismaClient`（由 Prisma 產生的資料庫客戶端類別）。
+- L13：建立 `prisma` 實例，後續用 `prisma.xxx` 操作 DB。
+- L16：建立 Express 應用 `app`。
+- L18：讀取埠號 `PORT`，若 `.env` 未設定預設 3000；以 `Number()` 確保型別是數字。
+- L20：讀取後台 Session Cookie 名稱（預設 `admin_session`）。
+- L21：讀取 Session 時效（小時，預設 24），轉數字。
+- L22：讀取 CORS 允許來源（預設 `*` 表示全部允許）。
+- L24：套用 CORS 中介層，這裡以函式方式動態判斷 `origin` 是否允許，並開啟 `credentials` 允許 Cookie。
+- L29：`express.json()` 中介層，讓 `req.body` 能自動解析 JSON。
+- L30：`cookieParser()` 中介層，讓 `req.cookies` 能取到 Cookie 值。
+- L32：`express.static(...)` 讓 `public/` 被當作網站靜態資源根目錄。
+- L35：宣告 `ensureBootData` 非同步函式，啟動時確保必要資料存在。
+- L36–L40：對 `VisitorStat` 做 `upsert`（有就更新、無就建立），確保 id=1 的統計資料存在。
+- L42：查詢 `AdminUser` 的數量。
+- L43–L50：若沒有管理員帳號，建立預設 `admin/admin1234`，密碼用 `bcrypt.hash` 加鹽雜湊儲存。
+- L53：宣告 `addHours(date, hours)`，把日期加上小時數回傳新 `Date`。
+- L57：宣告 `requireAdmin` 中介層，用於保護後台 API。
+- L60：從 `req.cookies` 取出 session token（key 由 `SESSION_COOKIE_NAME` 指定）。
+- L61：若無 token，回傳 401 未授權。
+- L62–L63：以 token 查詢 `AdminSession` 是否存在。
+- L64：若查不到，回傳 401（無效 session）。
+- L65–L67：若 `expiresAt` 過期，刪除該 session 並回 401（過期）。
+- L69–L70：把 `adminId` 放到 `req` 物件上，並呼叫 `next()` 放行到下一個處理器。
+- L71–L74：例外處理，印 log 並回 500（伺服器錯）。
+- L77：`GET /api/visitor`，讀取訪客累計。
+- L79：透過 `prisma.visitorStat.findUnique({ where: { id: 1 } })` 讀出資料。
+- L80：以 JSON 回應 `{ total }`，若無則 0。
+- L81–L85：錯誤回 500。
+- L87：`POST /api/visitor/hit`，累計訪客 +1。
+- L90–L94：`update` 讓 `total` 自增 1 並回傳最新值。
+- L95–L99：錯誤回 500。
+- L101：`POST /api/admin/login`，管理員登入。
+- L104–L105：從 `req.body` 取 `username`、`password`，缺少則回 400（參數錯）。
+- L106–L107：用 `prisma.adminUser.findUnique` 找使用者，不存在回 401。
+- L108–L109：`bcrypt.compare` 比對密碼雜湊，錯誤回 401。
+- L110：用 `crypto.randomBytes(32)` 產生 32 位元隨機 token（hex 字串）。
+- L111：計算 session 過期時間（現在 + TTL 小時）。
+- L112：建立一筆 `AdminSession`（token、adminId、expiresAt）。
+- L113–L118：以 `res.cookie` 設置 httpOnly Cookie（無法被 JS 讀取；`secure:false` 僅本機開發）。
+- L119：回傳 `{ ok: true }`。
+- L120–L124：錯誤回 500。
+- L126：`POST /api/admin/logout`，管理員登出（需已登入）。
+- L128–L130：刪除該 token 對應的 Session，清除 Cookie。
+- L131–L136：錯誤回 500。
+- L138：`GET /api/admin/players`，玩家列表（需已登入）。
+- L140：取得 `search` 字串，去頭尾空白。
+- L141：若有 `search`，以 `contains` 模糊查詢 username；否則不加條件。
+- L142：`findMany` 查詢玩家，按 `maxChips` 降冪，最多 100 筆。
+- L143–L148：以 JSON 回傳或錯誤處理。
+- L150：`GET /api/admin/rounds`，該玩家最近回合（需已登入、完全相符）。
+- L152：解析 `limit`（上限 500）。
+- L153：解析 `page`，至少為 1。
+- L154：解析 `username`。
+- L155–L158：未帶 username 時，回傳空集合（維持分頁欄位格式）。
+- L159：`findUnique` 以 username 尋找玩家，不存在回空。
+- L161：先 `count` 總筆數，用於計算總頁數。
+- L162–L168：`findMany` 查詢該玩家回合，排序 `createdAt desc`，加上 `skip`/`take` 分頁，並 `include: { player: true }` 連回玩家資訊。
+- L169：回傳 `{ rounds, total, page, limit }`。
+- L170–L174：錯誤回 500。
+- L176：`GET /api/rounds`，首頁近五戰績查詢。
+- L178–L179：檢查 `username` 必填，缺少回 400。
+- L180：解析 `limit`（預設 5，上限 50）。
+- L181：以 username 找 Player，不存在回空陣列。
+- L183–L187：查詢該玩家最近回合（只回回合表，不含 player 關聯）。
+- L188：回傳回合陣列。
+- L189–L193：錯誤回 500。
+- L195：`POST /api/rounds`，寫入一筆回合紀錄。
+- L197–L200：從 body 取欄位，任一缺漏回 400。
+- L202–L205：檢查 `result` 僅允許 `WIN|LOSE|PUSH`，否則 400。
+- L207–L211：`player.upsert`：若玩家不存在就以起始 `maxChips=100` 建立；存在則不改動。
+- L213–L222：`round.create` 建一筆回合（型別轉數值），以 `playerId` 建立關聯。
+- L225–L227：若 `chipsAfter` 高於 `player.maxChips`，更新玩家的歷史最高籌碼。
+- L229：回傳新建立的回合資料。
+- L230–L234：錯誤回 500。
+- L236：`GET /api/leaderboard`，排行榜（總/日/週/月）。
+- L239–L244：解析 `period` 與對應的起始時間 `since`。
+- L246–L250：若 `since` 為空（all-time），直接以 `player.maxChips desc` 取前 10，並切出 top5。
+- L253：區間排行榜：以 `round.groupBy` 彙總每位玩家在期間內 `chipsAfter` 的最大值。
+- L254–L258：指定分組欄位、條件、聚合函式 `_max`、排序與取前 10。
+- L260–L262：找出對應的玩家資料，並建立 `Map` 方便取 username。
+- L263–L269：把 groupBy 結果組裝成 `top10`，附上 `periodMaxChips` 與玩家 `maxChips`。
+- L269：回傳 `{ top10, top5 }`（前 5 名由 `slice(0, 5)` 取得）。
+- L270–L274：錯誤回 500。
+- L276：`GET /`：回應首頁 HTML（index.html）。
+- L280：`GET /admin`：回應後台 HTML（admin.html）。
+- L284–L287：啟動伺服器監聽 `PORT`，並在啟動時呼叫 `ensureBootData()` 準備預設資料。
+
+---
+小辭典：
+- CommonJS `require(...)`：Node.js 早期模組系統；ESM 對應語法是 `import ... from '...'`。
+- 中介層（middleware）：Express 在真正的路由處理前，先跑一段處理（如 CORS、驗證、解析 JSON）。
+- ORM（Prisma）：把資料表映射為程式物件，提供 `findMany/create/update/...` 等直覺 API。
+- httpOnly Cookie：瀏覽器無法用 JS 讀取，只有伺服器可讀；降低 XSS 風險。
+- 分頁（skip/take）：跳過前 N 筆、取 M 筆，對應 SQL 的 `OFFSET` / `LIMIT`。

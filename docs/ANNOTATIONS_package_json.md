@@ -1,0 +1,28 @@
+# package.json 行內導讀（逐行說明）
+
+- L1：JSON 物件開始。
+- L2：`name` 專案名稱。
+- L3：`version` 版本號。
+- L4：`description` 專案描述。
+- L5：`main` 預設入口（此處為伺服器檔 `server/index.js`）。
+- L6：`scripts` 指令區塊開始。
+- L7：`start` 用 Node 啟動伺服器。
+- L8：`dev` 用 nodemon 啟動，支援檔案變更自動重啟。
+- L9：`prisma:generate` 產生 Prisma Client。
+- L10：`prisma:migrate` 建立/套用資料庫遷移。
+- L11：`prisma:studio` 開啟 Prisma Studio GUI。
+- L12：scripts 區塊結束。
+- L13–L18：`keywords` 方便套件平台搜尋的關鍵字陣列。
+- L19：`author` 作者名稱（可留空）。
+- L20：`license` 授權（MIT）。
+- L21：`dependencies` 正式依賴：
+  - L22 `bcryptjs` 密碼雜湊
+  - L23 `cookie-parser` Cookie 解析
+  - L24 `cors` 跨來源
+  - L25 `dotenv` 環境變數
+  - L26 `express` 伺服器框架
+  - L27 `@prisma/client` Prisma 客戶端
+- L29：`devDependencies` 開發依賴：
+  - L30 `nodemon` 自動重啟
+  - L31 `prisma` CLI 與開發工具
+- L33：JSON 結尾。
